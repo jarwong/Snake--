@@ -9,6 +9,7 @@ using System.Security.Policy;
 using System.Timers;
 using System.Windows.Input;
 
+
 namespace Snake__
 {
     enum Direction
@@ -35,11 +36,10 @@ namespace Snake__
 
         public GameBoard()
         {
-            width = 30;
-            height = 20;
+            width = 31;
+            height = 21;
         }
     }
-
     class Body
     {
         public List<Point> snakebody;
@@ -54,11 +54,30 @@ namespace Snake__
         }
     }
 
+    class Food
+    {
+        public Point Location;
+
+        public Food()
+        {
+            Location = GenerateFoodLocation();
+        }
+        public Point GenerateFoodLocation()
+        {
+            Random rnd = new Random();
+            Point temp = new Point();
+            temp.X = rnd.Next(31);
+            temp.Y = rnd.Next(21);
+            return temp;
+        }
+    }
+
     class Program
     {
         public static GameBoard Snakegame;
         public static Body Snakebody;
         public static Movement Snakedirection;
+        public static Food Snakefood;
 
         [STAThread]
         static void Main(string[] args)
@@ -72,6 +91,8 @@ namespace Snake__
             Snakegame = new GameBoard();
             Snakebody = new Body();
             Snakedirection = new Movement();
+            Snakefood = new Food();
+
 
             while (true)
             {
@@ -97,17 +118,12 @@ namespace Snake__
                 }
                 //Console.WriteLine("test");
             }
-            //while ((Keyboard.GetKeyStates(Key.Q) & KeyStates.Down) > 0)
-            //{
-            //    //Console.WriteLine("derp"); 
-            //    ;
-            //}
         }
 
-        //[STAThread]
         public static void DisplayTimeEvent(object source, ElapsedEventArgs e)
         {
             Console.Clear();
+
             char[,] render = new char[Snakegame.width, Snakegame.height];
 
             // Fill with background
@@ -115,10 +131,14 @@ namespace Snake__
                 for (int y = 0; y < Snakegame.height; ++y)
                     render[x, y] = '.';
 
+            // Update with snake location
             foreach (Point point in Snakebody.snakebody)
             {
-                render[point.X, point.Y] = '#';
+                render[point.X, point.Y] = '@';
             }
+
+            // Update with food location
+            render[Snakefood.Location.X, Snakefood.Location.Y] = '#';
 
             // Render to console
             for (int y = 0; y < Snakegame.height; ++y)
@@ -130,8 +150,18 @@ namespace Snake__
                 Console.WriteLine();
             }
 
-            // Remove tail from body
-            Snakebody.snakebody.RemoveAt(Snakebody.snakebody.Count - 1);
+           
+
+            // Remove tail from body, but don't do it if the head is on the food
+            if (Snakebody.snakebody[0] != Snakefood.Location)
+            {
+                Snakebody.snakebody.RemoveAt(Snakebody.snakebody.Count - 1);
+            }
+            if (Snakebody.snakebody[0] == Snakefood.Location)
+            {
+                Snakefood.Location = Snakefood.GenerateFoodLocation();
+            }
+            
 
             // Get head position
             Point next = Snakebody.snakebody[0];
