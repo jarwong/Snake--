@@ -1,0 +1,6 @@
+E:\Drive\Projects\Visual Studio Projects\Snake!!\Testage\bin\Debug\Testage.exe.config
+E:\Drive\Projects\Visual Studio Projects\Snake!!\Testage\bin\Debug\Testage.exe
+E:\Drive\Projects\Visual Studio Projects\Snake!!\Testage\bin\Debug\Testage.pdb
+E:\Drive\Projects\Visual Studio Projects\Snake!!\Testage\obj\Debug\Testage.csprojResolveAssemblyReference.cache
+E:\Drive\Projects\Visual Studio Projects\Snake!!\Testage\obj\Debug\Testage.exe
+E:\Drive\Projects\Visual Studio Projects\Snake!!\Testage\obj\Debug\Testage.pdb
