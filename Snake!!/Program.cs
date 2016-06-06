@@ -85,7 +85,7 @@ namespace Snake__
 
             Timer myTimer = new Timer();
             myTimer.Elapsed += new ElapsedEventHandler(DisplayTimeEvent);
-            myTimer.Interval = 200;
+            myTimer.Interval = 100;
             myTimer.Start();
 
             Snakegame = new GameBoard();
@@ -130,6 +130,8 @@ namespace Snake__
             for (int x = 0; x < Snakegame.width; ++x)
                 for (int y = 0; y < Snakegame.height; ++y)
                     render[x, y] = '.';
+            // Update with food location
+            render[Snakefood.Location.X, Snakefood.Location.Y] = '#';
 
             // Update with snake location
             foreach (Point point in Snakebody.snakebody)
@@ -137,8 +139,7 @@ namespace Snake__
                 render[point.X, point.Y] = '@';
             }
 
-            // Update with food location
-            render[Snakefood.Location.X, Snakefood.Location.Y] = '#';
+
 
             // Render to console
             for (int y = 0; y < Snakegame.height; ++y)
@@ -149,19 +150,19 @@ namespace Snake__
                 }
                 Console.WriteLine();
             }
-
-           
+            
 
             // Remove tail from body, but don't do it if the head is on the food
             if (Snakebody.snakebody[0] != Snakefood.Location)
             {
                 Snakebody.snakebody.RemoveAt(Snakebody.snakebody.Count - 1);
             }
+            // If head is on the food then generate new food location
             if (Snakebody.snakebody[0] == Snakefood.Location)
             {
                 Snakefood.Location = Snakefood.GenerateFoodLocation();
             }
-            
+
 
             // Get head position
             Point next = Snakebody.snakebody[0];
@@ -179,7 +180,5 @@ namespace Snake__
             // Insert new head into the snake's body
             Snakebody.snakebody.Insert(0, next);
         }
-
-        // Array with map characters
     }
 }
