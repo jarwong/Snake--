@@ -1,0 +1,6 @@
+E:\Drive\Projects\Visual Studio Projects\Snake!!\Testing\bin\Release\Testing.exe.config
+E:\Drive\Projects\Visual Studio Projects\Snake!!\Testing\bin\Release\Testing.exe
+E:\Drive\Projects\Visual Studio Projects\Snake!!\Testing\bin\Release\Testing.pdb
+E:\Drive\Projects\Visual Studio Projects\Snake!!\Testing\obj\Release\Testing.csprojResolveAssemblyReference.cache
+E:\Drive\Projects\Visual Studio Projects\Snake!!\Testing\obj\Release\Testing.exe
+E:\Drive\Projects\Visual Studio Projects\Snake!!\Testing\obj\Release\Testing.pdb

@@ -1,0 +1,6 @@
+E:\Drive\Projects\Visual Studio Projects\Snake!!\Snake!!\bin\Release\Snake!!.exe.config
+E:\Drive\Projects\Visual Studio Projects\Snake!!\Snake!!\bin\Release\Snake!!.exe
+E:\Drive\Projects\Visual Studio Projects\Snake!!\Snake!!\bin\Release\Snake!!.pdb
+E:\Drive\Projects\Visual Studio Projects\Snake!!\Snake!!\obj\Release\Snake!!.csprojResolveAssemblyReference.cache
+E:\Drive\Projects\Visual Studio Projects\Snake!!\Snake!!\obj\Release\Snake!!.exe
+E:\Drive\Projects\Visual Studio Projects\Snake!!\Snake!!\obj\Release\Snake!!.pdb

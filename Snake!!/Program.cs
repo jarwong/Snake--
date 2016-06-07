@@ -1,16 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using System.Drawing;
-using System.Security.AccessControl;
-using System.Security.Policy;
 using System.Timers;
 using System.Windows.Input;
 using System.Data.SqlClient;
 using System.Configuration;
-using System.Threading;
+
 namespace Snake__
 {
     enum Direction
@@ -88,9 +83,11 @@ namespace Snake__
         public Point GenerateFoodLocation()
         {
             Random rnd = new Random();
-            Point temp = new Point();
-            temp.X = rnd.Next(31);
-            temp.Y = rnd.Next(21);
+            Point temp = new Point
+            {
+                X = rnd.Next(31),
+                Y = rnd.Next(21)
+            };
             return temp;
         }
     }
@@ -105,13 +102,13 @@ namespace Snake__
         public static Player Snakeplayer;
 
 
-        public static System.Timers.Timer MyTimer = new System.Timers.Timer();
+        public static Timer MyTimer = new Timer();
 
         [STAThread]
         static void Main(string[] args)
         {
             // Initialize connection to SQL db
-            SqlConnection Connection = new SqlConnection(ConfigurationManager.ConnectionStrings["SnakeSQL"].ConnectionString);
+            SqlConnection connection = new SqlConnection(ConfigurationManager.ConnectionStrings["SnakeSQL"].ConnectionString);
 
             // Initialize all the game objects
             Snakegame = new GameBoard();
@@ -127,19 +124,20 @@ namespace Snake__
             Snakeplayer.Name = Console.ReadLine();
 
             // Run stored procedures to get statistics on the provided name
-            SqlCommand checkIfNewPlayerCommand = new SqlCommand("exec spCountPlayerName @Player_Name = '" + Snakeplayer.Name + "'", Connection);
-            SqlCommand getHighScoreCommand = new SqlCommand("exec spGetHighScore @Player_Name = '" + Snakeplayer.Name + "'", Connection);
-            SqlCommand getAvgScoreCommand = new SqlCommand("exec spGetAvgScore @Player_Name = '" + Snakeplayer.Name + "'", Connection);
-            SqlCommand getGameCountCommand = new SqlCommand("exec spGetGameCount @Player_Name = '" + Snakeplayer.Name + "'", Connection);
+            SqlCommand checkIfNewPlayerCommand = new SqlCommand("exec spCountPlayerName @Player_Name = '" + Snakeplayer.Name + "'", connection);
+            SqlCommand getHighScoreCommand = new SqlCommand("exec spGetHighScore @Player_Name = '" + Snakeplayer.Name + "'", connection);
+            SqlCommand getAvgScoreCommand = new SqlCommand("exec spGetAvgScore @Player_Name = '" + Snakeplayer.Name + "'", connection);
+            SqlCommand getGameCountCommand = new SqlCommand("exec spGetGameCount @Player_Name = '" + Snakeplayer.Name + "'", connection);
 
-            Connection.Open();
+            connection.Open();
 
             // If this is a returning player, present them with their stats
-            if ((int) checkIfNewPlayerCommand.ExecuteScalar() == 1)
+            if ((int) checkIfNewPlayerCommand.ExecuteScalar() >= 1)
             {
                 int highscore = (int) getHighScoreCommand.ExecuteScalar();
                 int avgscore = (int) getAvgScoreCommand.ExecuteScalar();
                 int gamecount = (int) getGameCountCommand.ExecuteScalar();
+
                 // Present player with their statistics and then start the game
                 Console.Clear();
                 Console.WriteLine("Hello, " + Snakeplayer.Name + "! Your current high score is " + highscore + ".");
@@ -153,7 +151,7 @@ namespace Snake__
                 Console.WriteLine("Press any key and the game will start.");
             }
             
-            Connection.Close();
+            connection.Close();
 
 
 
@@ -161,7 +159,7 @@ namespace Snake__
             Console.ReadKey();
 
             // Beginning game timer
-            MyTimer.Elapsed += new ElapsedEventHandler(DisplayTimeEvent);
+            MyTimer.Elapsed += DisplayTimeEvent;
             MyTimer.Interval = 100;
             MyTimer.Start();
 
@@ -196,18 +194,16 @@ namespace Snake__
                 {
                     Console.WriteLine("Game has ended");
                     break;
-                }
-                
-
+                }              
             }
 
             // Upload score to [Snake].[dbo].[tblGameScores]
             Console.WriteLine("Uploading your score");
-            SqlCommand uploadCommand = new SqlCommand("INSERT INTO [dbo].[tblGameScores] (PLAYER_NAME, SCORE) Values ('" + Snakeplayer.Name + "', " + Snakescore.Value + ");", Connection);
+            SqlCommand uploadCommand = new SqlCommand("INSERT INTO [dbo].[tblGameScores] (PLAYER_NAME, SCORE) Values ('" + Snakeplayer.Name + "', " + Snakescore.Value + ");", connection);
 
-            Connection.Open();
+            connection.Open();
             uploadCommand.ExecuteNonQuery();
-            Connection.Close();
+            connection.Close();
 
             Console.WriteLine("Score has been uploaded");
             Console.WriteLine("Game has ended");
