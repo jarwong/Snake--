@@ -5,6 +5,8 @@ using System.Timers;
 using System.Windows.Input;
 using System.Data.SqlClient;
 using System.Configuration;
+using System.Net;
+using System.Net.NetworkInformation;
 
 namespace Snake__
 {
@@ -128,9 +130,12 @@ namespace Snake__
             SqlCommand getHighScoreCommand = new SqlCommand("exec spGetHighScore @Player_Name = '" + Snakeplayer.Name + "'", connection);
             SqlCommand getAvgScoreCommand = new SqlCommand("exec spGetAvgScore @Player_Name = '" + Snakeplayer.Name + "'", connection);
             SqlCommand getGameCountCommand = new SqlCommand("exec spGetGameCount @Player_Name = '" + Snakeplayer.Name + "'", connection);
-
+            SqlCommand getTop10ScoresCommand = new SqlCommand("exec spGetTop10Scores", connection);
             connection.Open();
 
+            List<String> top10Scores = new List<string>();
+            
+            
             // If this is a returning player, present them with their stats
             if ((int) checkIfNewPlayerCommand.ExecuteScalar() >= 1)
             {
@@ -142,15 +147,20 @@ namespace Snake__
                 Console.Clear();
                 Console.WriteLine("Hello, " + Snakeplayer.Name + "! Your current high score is " + highscore + ".");
                 Console.WriteLine("Your average score is " + avgscore + " over " + gamecount + " rounds played.");
-                Console.WriteLine("Press any key and the game will start.");
+                
+                
             }
             //If they are a new player, welcome them and move onwards to starting the game
             else
             {
                 Console.WriteLine("Hello, " + Snakeplayer.Name + ", it looks like you're a new player! No statistics to display. ");
-                Console.WriteLine("Press any key and the game will start.");
             }
-            
+
+            Console.WriteLine();
+            Console.WriteLine("The current high scores are: ");
+            LoadTop10().ForEach(Console.WriteLine);
+            Console.WriteLine();
+            Console.WriteLine("Press any key and the game will start.");
             connection.Close();
 
 
@@ -293,6 +303,30 @@ namespace Snake__
             }
 
         }
+
+        public static List<String> LoadTop10()
+        {
+
+            var listOfScores = new List<String>();
+            SqlConnection connection = new SqlConnection(ConfigurationManager.ConnectionStrings["SnakeSQL"].ConnectionString);
+            connection.Open();
+            
+            using (var getTop10ScoresCommand = new SqlCommand("exec spGetTop10Scores", connection))
+            {
+                using (var reader = getTop10ScoresCommand.ExecuteReader())
+                {
+                    while (reader.Read())
+
+                    {
+                        listOfScores.Add(string.Format("{0}\t{1}", reader["PLAYER_NAME"].ToString(), reader["SCORE"].ToString()));
+                    }
+                }
+            }
+
+            return listOfScores;
+
+
+        } 
 
 
     }
