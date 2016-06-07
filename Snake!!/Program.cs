@@ -29,27 +29,43 @@ namespace Snake__
             Movedirection = Direction.Right;
         }
     }
+
+    class Score
+    {
+        public int Value;
+
+        public int AddToScore(int foodcounter)
+        {
+            Value += 100 + foodcounter * 10;
+            return Value;
+        }
+    }
     class GameBoard
     {
-        public int width;
-        public int height;
+        public int Width;
+        public int Height;
+        public int Foodcounter;
+        public bool Gameover;
+        
 
         public GameBoard()
         {
-            width = 31;
-            height = 21;
+            Width = 31;
+            Height = 21;
+            Gameover = false;
+            Foodcounter = 0;
         }
     }
     class Body
     {
-        public List<Point> snakebody;
+        public List<Point> Snakebody;
 
         public Body()
         {
-            snakebody = new List<Point>();
+            Snakebody = new List<Point>();
             for (int i = 0; i < 3; i++)
             {
-                snakebody.Add(new Point(10, 10 + i));
+                Snakebody.Add(new Point(10, 10 + i));
             }
         }
     }
@@ -78,12 +94,12 @@ namespace Snake__
         public static Body Snakebody;
         public static Movement Snakedirection;
         public static Food Snakefood;
+        public static Score Snakescore;
 
+        static Timer myTimer = new Timer();
         [STAThread]
         static void Main(string[] args)
         {
-
-            Timer myTimer = new Timer();
             myTimer.Elapsed += new ElapsedEventHandler(DisplayTimeEvent);
             myTimer.Interval = 100;
             myTimer.Start();
@@ -92,7 +108,7 @@ namespace Snake__
             Snakebody = new Body();
             Snakedirection = new Movement();
             Snakefood = new Food();
-
+            Snakescore = new Score();
 
             while (true)
             {
@@ -116,25 +132,33 @@ namespace Snake__
                 {
                     Snakedirection.Movedirection = Direction.Down;
                 }
+                if (Snakegame.Gameover)
+                {
+                    //myTimer.Enabled = false;
+                    Console.WriteLine("Game has ended");
+                    break;
+                }
+                
                 //Console.WriteLine("test");
             }
+            Console.ReadLine();
         }
 
         public static void DisplayTimeEvent(object source, ElapsedEventArgs e)
         {
             Console.Clear();
 
-            char[,] render = new char[Snakegame.width, Snakegame.height];
+            char[,] render = new char[Snakegame.Width, Snakegame.Height];
 
             // Fill with background
-            for (int x = 0; x < Snakegame.width; ++x)
-                for (int y = 0; y < Snakegame.height; ++y)
+            for (int x = 0; x < Snakegame.Width; ++x)
+                for (int y = 0; y < Snakegame.Height; ++y)
                     render[x, y] = '.';
             // Update with food location
             render[Snakefood.Location.X, Snakefood.Location.Y] = '#';
 
             // Update with snake location
-            foreach (Point point in Snakebody.snakebody)
+            foreach (Point point in Snakebody.Snakebody)
             {
                 render[point.X, point.Y] = '@';
             }
@@ -142,9 +166,9 @@ namespace Snake__
 
 
             // Render to console
-            for (int y = 0; y < Snakegame.height; ++y)
+            for (int y = 0; y < Snakegame.Height; ++y)
             {
-                for (int x = 0; x < Snakegame.width; ++x)
+                for (int x = 0; x < Snakegame.Width; ++x)
                 {
                     Console.Write(render[x, y]);
                 }
@@ -153,21 +177,24 @@ namespace Snake__
             
 
             // Remove tail from body, but don't do it if the head is on the food
-            if (Snakebody.snakebody[0] != Snakefood.Location)
+            if (Snakebody.Snakebody[0] != Snakefood.Location)
             {
-                Snakebody.snakebody.RemoveAt(Snakebody.snakebody.Count - 1);
+                Snakebody.Snakebody.RemoveAt(Snakebody.Snakebody.Count - 1);
             }
             // If head is on the food then generate new food location
-            if (Snakebody.snakebody[0] == Snakefood.Location)
+            // Also increase score
+            if (Snakebody.Snakebody[0] == Snakefood.Location)
             {
                 Snakefood.Location = Snakefood.GenerateFoodLocation();
+                Snakescore.Value = Snakescore.AddToScore(Snakegame.Foodcounter);
+                Snakegame.Foodcounter += 1;
             }
 
 
             // Get head position
-            Point next = Snakebody.snakebody[0];
+            Point next = Snakebody.Snakebody[0];
 
-            // Calculate where the head should be next based on the snake's direction
+            // Determine where the head should be
             if (Snakedirection.Movedirection == Direction.Left)
                 next = new Point(next.X - 1, next.Y);
             if (Snakedirection.Movedirection == Direction.Right)
@@ -177,8 +204,27 @@ namespace Snake__
             if (Snakedirection.Movedirection == Direction.Down)
                 next = new Point(next.X, next.Y + 1);
 
-            // Insert new head into the snake's body
-            Snakebody.snakebody.Insert(0, next);
+            // If snake hits itself, end the game
+            if (Snakebody.Snakebody.Contains(next))
+            {
+                Console.WriteLine("You've achieved a score of " + Snakescore.Value);
+                myTimer.Stop();
+                Snakegame.Gameover = true;
+            }
+
+
+            // Insert the new head into body
+            Snakebody.Snakebody.Insert(0, next);
+
+            // If head hits a wall, end the game
+            if (Snakebody.Snakebody[0].X == -1 | Snakebody.Snakebody[0].Y == -1 | Snakebody.Snakebody[0].X == Snakegame.Width || Snakebody.Snakebody[0].Y == Snakegame.Height)
+            {
+                
+                Console.WriteLine("You've achieved a score of " + Snakescore.Value);
+                myTimer.Stop();
+                Snakegame.Gameover = true;
+            }
+
         }
     }
 }
