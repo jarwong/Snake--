@@ -8,8 +8,9 @@ using System.Security.AccessControl;
 using System.Security.Policy;
 using System.Timers;
 using System.Windows.Input;
-
-
+using System.Data.SqlClient;
+using System.Configuration;
+using System.Threading;
 namespace Snake__
 {
     enum Direction
@@ -30,6 +31,11 @@ namespace Snake__
         }
     }
 
+    class Player
+    {
+        public String Name;
+    }
+
     class Score
     {
         public int Value;
@@ -39,6 +45,7 @@ namespace Snake__
             Value += 100 + foodcounter * 10;
             return Value;
         }
+
     }
     class GameBoard
     {
@@ -95,27 +102,57 @@ namespace Snake__
         public static Movement Snakedirection;
         public static Food Snakefood;
         public static Score Snakescore;
+        public static Player Snakeplayer;
 
-        static Timer myTimer = new Timer();
+
+        public static System.Timers.Timer MyTimer = new System.Timers.Timer();
+
         [STAThread]
         static void Main(string[] args)
         {
-            myTimer.Elapsed += new ElapsedEventHandler(DisplayTimeEvent);
-            myTimer.Interval = 100;
-            myTimer.Start();
+            // Initialize connection to SQL db
+            SqlConnection Connection = new SqlConnection(ConfigurationManager.ConnectionStrings["SnakeSQL"].ConnectionString);
 
+            // Initialize all the game objects
             Snakegame = new GameBoard();
             Snakebody = new Body();
             Snakedirection = new Movement();
             Snakefood = new Food();
             Snakescore = new Score();
+            Snakeplayer = new Player();
+
+            // Query player for their name
+            Console.WriteLine("Welcome to Snake!!");
+            Console.Write("What is your name? ");
+            Snakeplayer.Name = Console.ReadLine();
+
+            SqlCommand highScoreCommand = new SqlCommand("SELECT TOP 1 SCORE FROM dbo.tblGameScores WHERE PLAYER_NAME = '" + Snakeplayer.Name + "' ORDER BY SCORE DESC", Connection);
+
+            Connection.Open();
+            int highscore = Convert.ToInt32(highScoreCommand.ExecuteScalar());
+            Connection.Close();
+
+            Console.Clear();
+            Console.WriteLine("Hello, " + Snakeplayer.Name + "! Your current high score is " + highscore + ".");
+            Console.WriteLine("Press any key and the game will start.");
+
+
+            Console.ReadKey();
+
+            // Beginning game timer
+            MyTimer.Elapsed += new ElapsedEventHandler(DisplayTimeEvent);
+            MyTimer.Interval = 100;
+            MyTimer.Start();
 
             while (true)
             {
+                // Player can press Q to quit
                 if ((Keyboard.GetKeyStates(Key.Q) & KeyStates.Down) > 0)
                 {
                     break;
                 }
+
+                // These detect arrow key presses to determine movement
                 if ((Keyboard.GetKeyStates(Key.Left) & KeyStates.Down) > 0)
                 {
                     Snakedirection.Movedirection = Direction.Left;
@@ -132,15 +169,28 @@ namespace Snake__
                 {
                     Snakedirection.Movedirection = Direction.Down;
                 }
+
+                // If the Gameover variable is true then the game will end and break the loop
                 if (Snakegame.Gameover)
                 {
-                    //myTimer.Enabled = false;
                     Console.WriteLine("Game has ended");
                     break;
                 }
                 
-                //Console.WriteLine("test");
+
             }
+
+            // Upload score to [Snake].[dbo].[tblGameScores]
+            Console.WriteLine("Uploading your score");
+            SqlCommand uploadCommand = new SqlCommand("INSERT INTO [dbo].[tblGameScores] (PLAYER_NAME, SCORE) Values ('" + Snakeplayer.Name + "', " + Snakescore.Value + ");", Connection);
+
+            Connection.Open();
+            uploadCommand.ExecuteNonQuery();
+            Connection.Close();
+
+            Console.WriteLine("Score has been uploaded");
+            Console.WriteLine("Game has ended");
+
             Console.ReadLine();
         }
 
@@ -207,8 +257,8 @@ namespace Snake__
             // If snake hits itself, end the game
             if (Snakebody.Snakebody.Contains(next))
             {
-                Console.WriteLine("You've achieved a score of " + Snakescore.Value);
-                myTimer.Stop();
+                Console.WriteLine(Snakeplayer.Name + ", you've achieved a score of " + Snakescore.Value + "!");
+                MyTimer.Stop();
                 Snakegame.Gameover = true;
             }
 
@@ -220,11 +270,13 @@ namespace Snake__
             if (Snakebody.Snakebody[0].X == -1 | Snakebody.Snakebody[0].Y == -1 | Snakebody.Snakebody[0].X == Snakegame.Width || Snakebody.Snakebody[0].Y == Snakegame.Height)
             {
                 
-                Console.WriteLine("You've achieved a score of " + Snakescore.Value);
-                myTimer.Stop();
+                Console.WriteLine(Snakeplayer.Name + ", you've achieved a score of " + Snakescore.Value + "!");
+                MyTimer.Stop();
                 Snakegame.Gameover = true;
             }
 
         }
+
+
     }
 }
