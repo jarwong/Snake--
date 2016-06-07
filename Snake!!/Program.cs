@@ -126,14 +126,21 @@ namespace Snake__
             Console.Write("What is your name? ");
             Snakeplayer.Name = Console.ReadLine();
 
-            SqlCommand highScoreCommand = new SqlCommand("SELECT TOP 1 SCORE FROM dbo.tblGameScores WHERE PLAYER_NAME = '" + Snakeplayer.Name + "' ORDER BY SCORE DESC", Connection);
+            // Run stored procedures to get statistics on the provided name
+            SqlCommand getHighScoreCommand = new SqlCommand("exec spGetHighScore @Player_Name = '" + Snakeplayer.Name + "'", Connection);
+            SqlCommand getAvgScoreCommand = new SqlCommand("exec spGetAvgScore @Player_Name = '" + Snakeplayer.Name + "'", Connection);
+            SqlCommand getGameCountCommand = new SqlCommand("exec spGetGameCount @Player_Name = '" + Snakeplayer.Name + "'", Connection);
 
             Connection.Open();
-            int highscore = Convert.ToInt32(highScoreCommand.ExecuteScalar());
+            int highscore = Convert.ToInt32(getHighScoreCommand.ExecuteScalar());
+            int avgscore = Convert.ToInt32(getAvgScoreCommand.ExecuteScalar());
+            int gamecount = Convert.ToInt32(getGameCountCommand.ExecuteScalar());
             Connection.Close();
 
+            // Present player with their statistics and then start the game
             Console.Clear();
             Console.WriteLine("Hello, " + Snakeplayer.Name + "! Your current high score is " + highscore + ".");
+            Console.WriteLine("Your average score is " + avgscore + " over " + gamecount + " rounds played.");
             Console.WriteLine("Press any key and the game will start.");
 
 
