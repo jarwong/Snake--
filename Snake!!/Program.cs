@@ -66,6 +66,7 @@ namespace Snake__
 
         public Body()
         {
+            //Initializes the snake with 3 sections
             Snakebody = new List<Point>();
             for (int i = 0; i < 3; i++)
             {
@@ -96,19 +97,19 @@ namespace Snake__
 
     class Program
     {
-        public static GameBoard Snakegame;
-        public static Body Snakebody;
-        public static Movement Snakedirection;
-        public static Food Snakefood;
-        public static Score Snakescore;
-        public static Player Snakeplayer;
+        private static GameBoard Snakegame;
+        private static Body Snakebody;
+        private static Movement Snakedirection;
+        private static Food Snakefood;
+        private static Score Snakescore;
+        private static Player Snakeplayer;
 
 
         public static Timer MyTimer = new Timer();
 
-        // Timer does not function without this
-
+        // Timer will not function without this
         [STAThread]
+
         static void Main(string[] args)
         {
             // Create connection to SQL db
@@ -223,7 +224,7 @@ namespace Snake__
             Console.ReadLine();
         }
 
-        public static void DisplayTimeEvent(object source, ElapsedEventArgs e)
+        private static void DisplayTimeEvent(object source, ElapsedEventArgs e)
         {
             Console.Clear();
 
@@ -308,7 +309,7 @@ namespace Snake__
 
         // Procedure that connects to the SnakeSQL DB and gets a list of the top ten players and their scores
         // Then it converts it into a list of Strings and returns that list
-        public static List<String> LoadTop10()
+        private static List<String> LoadTop10()
         {
 
             var listOfScores = new List<String>();
