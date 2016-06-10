@@ -5,8 +5,8 @@ using System.Timers;
 using System.Windows.Input;
 using System.Data.SqlClient;
 using System.Configuration;
-using System.Net;
-using System.Net.NetworkInformation;
+using System.Threading;
+using Timer = System.Timers.Timer;
 
 namespace Snake__
 {
@@ -24,7 +24,7 @@ namespace Snake__
 
         public Movement()
         {
-            Movedirection = Direction.Right;
+            Movedirection = Direction.Up;
         }
     }
 
@@ -59,18 +59,79 @@ namespace Snake__
             Gameover = false;
             Foodcounter = 0;
         }
+        public static void WriteAt(string s, int x, int y)
+        {
+            try
+            {
+                Console.SetCursorPosition(x, y);
+                Console.Write(s);
+            }
+            catch (ArgumentOutOfRangeException e)
+            {
+                Console.Clear();
+                Console.WriteLine(e.Message);
+            }
+        }
+        public static void WriteAt(char s, int x, int y)
+        {
+            try
+            {
+                Console.SetCursorPosition(x, y);
+                Console.Write(s);
+            }
+            catch (ArgumentOutOfRangeException e)
+            {
+                Console.Clear();
+                Console.WriteLine(e.Message);
+            }
+        }
+
+        // Method to draw the borders of the game field
+        public void Drawborders()
+        {
+            // Draw left border
+            for (int i = 1; i <= Height; i++)
+            {
+                WriteAt("|", 0, i);
+            }
+
+            // Draw right border
+            for (int i = 1; i <= Height; i++)
+            {
+                WriteAt("|", Width, i);
+            }
+
+            // Draw top border
+            for (int i = 1; i <= Width; i++)
+            {
+                WriteAt("-", i, 0);
+            }
+
+            // Draw bottom border
+            for (int i = 1; i <= Width; i++)
+            {
+                WriteAt("-", i, Height + 1);
+            }
+
+            // Draw the four corners
+            WriteAt("*", 0, 0);
+            WriteAt("*", Width, Height);
+            WriteAt("*", Width, 0);
+            WriteAt("*", 0, Height);
+
+        }
     }
     class Body
     {
-        public List<Point> Snakebody;
+        public List<Point> Location;
 
         public Body()
         {
             //Initializes the snake with 3 sections
-            Snakebody = new List<Point>();
+            Location = new List<Point>();
             for (int i = 0; i < 3; i++)
             {
-                Snakebody.Add(new Point(10, 10 + i));
+                Location.Add(new Point(10, 10 + i));
             }
         }
     }
@@ -97,12 +158,12 @@ namespace Snake__
 
     class Program
     {
-        private static GameBoard Snakegame;
-        private static Body Snakebody;
-        private static Movement Snakedirection;
-        private static Food Snakefood;
-        private static Score Snakescore;
-        private static Player Snakeplayer;
+        private static GameBoard _snakegame;
+        private static Body _snakebody;
+        private static Movement _snakedirection;
+        private static Food _snakefood;
+        private static Score _snakescore;
+        private static Player _snakeplayer;
 
 
         public static Timer MyTimer = new Timer();
@@ -116,24 +177,24 @@ namespace Snake__
             SqlConnection connection = new SqlConnection(ConfigurationManager.ConnectionStrings["SnakeSQL"].ConnectionString);
 
             // Initialize all the game objects
-            Snakegame = new GameBoard();
-            Snakebody = new Body();
-            Snakedirection = new Movement();
-            Snakefood = new Food();
-            Snakescore = new Score();
-            Snakeplayer = new Player();
+            _snakegame = new GameBoard();
+            _snakebody = new Body();
+            _snakedirection = new Movement();
+            _snakefood = new Food();
+            _snakescore = new Score();
+            _snakeplayer = new Player();
 
             // Query player for their name
             Console.WriteLine("Welcome to Snake!!");
             Console.Write("What is your name? ");
-            Snakeplayer.Name = Console.ReadLine();
+            _snakeplayer.Name = Console.ReadLine();
 
             // Create references to stored procedures to get statistics on the provided name
-            SqlCommand checkIfNewPlayerCommand = new SqlCommand("exec spCountPlayerName @Player_Name = '" + Snakeplayer.Name + "'", connection);
-            SqlCommand getHighScoreCommand = new SqlCommand("exec spGetHighScore @Player_Name = '" + Snakeplayer.Name + "'", connection);
-            SqlCommand getAvgScoreCommand = new SqlCommand("exec spGetAvgScore @Player_Name = '" + Snakeplayer.Name + "'", connection);
-            SqlCommand getGameCountCommand = new SqlCommand("exec spGetGameCount @Player_Name = '" + Snakeplayer.Name + "'", connection);
-            SqlCommand getTop10ScoresCommand = new SqlCommand("exec spGetTop10Scores", connection);
+            SqlCommand checkIfNewPlayerCommand = new SqlCommand("exec spCountPlayerName @Player_Name = '" + _snakeplayer.Name + "'", connection);
+            SqlCommand getHighScoreCommand = new SqlCommand("exec spGetHighScore @Player_Name = '" + _snakeplayer.Name + "'", connection);
+            SqlCommand getAvgScoreCommand = new SqlCommand("exec spGetAvgScore @Player_Name = '" + _snakeplayer.Name + "'", connection);
+            SqlCommand getGameCountCommand = new SqlCommand("exec spGetGameCount @Player_Name = '" + _snakeplayer.Name + "'", connection);
+            // SqlCommand getTop10ScoresCommand = new SqlCommand("exec spGetTop10Scores", connection);
 
             // Initialize connection to SQL db
             connection.Open();
@@ -147,7 +208,7 @@ namespace Snake__
 
                 // Present player with their statistics and then start the game
                 Console.Clear();
-                Console.WriteLine("Hello, " + Snakeplayer.Name + "! Your current high score is " + highscore + ".");
+                Console.WriteLine("Hello, " + _snakeplayer.Name + "! Your current high score is " + highscore + ".");
                 Console.WriteLine("Your average score is " + avgscore + " over " + gamecount + " rounds played.");
                 
                 
@@ -156,7 +217,7 @@ namespace Snake__
             // If they are a new player, welcome them and move onwards to starting the game
             else
             {
-                Console.WriteLine("Hello, " + Snakeplayer.Name + ", it looks like you're a new player! No statistics to display. ");
+                Console.WriteLine("Hello, " + _snakeplayer.Name + ", it looks like you're a new player! No statistics to display. ");
             }
 
             Console.WriteLine();
@@ -168,12 +229,18 @@ namespace Snake__
 
             // Game begins once a key is pressed
             Console.ReadKey();
+            Console.Clear();
+            // Snakegame.Drawborders();
+
+            // Sleep for half a second.  This helps prevent the player from instantly losing the game if 
+            // they start the game with the left arrow key (since the snake initially moves right)
+            Thread.Sleep(500);
 
             // Beginning game timer
             MyTimer.Elapsed += DisplayTimeEvent;
             MyTimer.Interval = 100;
             MyTimer.Start();
-
+            DrawScreen();
             while (true)
             {
                 // Player can press Q to quit and upload their score
@@ -186,24 +253,25 @@ namespace Snake__
                 // These detect arrow key presses to determine movement
                 if ((Keyboard.GetKeyStates(Key.Left) & KeyStates.Down) > 0)
                 {
-                    Snakedirection.Movedirection = Direction.Left;
+                    _snakedirection.Movedirection = Direction.Left;
                 }
                 if ((Keyboard.GetKeyStates(Key.Right) & KeyStates.Down) > 0)
                 {
-                    Snakedirection.Movedirection = Direction.Right;
+                    _snakedirection.Movedirection = Direction.Right;
                 }
                 if ((Keyboard.GetKeyStates(Key.Up) & KeyStates.Down) > 0)
                 {
-                    Snakedirection.Movedirection = Direction.Up;
+                    _snakedirection.Movedirection = Direction.Up;
                 }
                 if ((Keyboard.GetKeyStates(Key.Down) & KeyStates.Down) > 0)
                 {
-                    Snakedirection.Movedirection = Direction.Down;
+                    _snakedirection.Movedirection = Direction.Down;
                 }
 
                 // If the Gameover variable is true then break the loop
-                if (Snakegame.Gameover)
+                if (_snakegame.Gameover)
                 {
+                    Console.SetCursorPosition(0, _snakegame.Height + 2);
                     Console.WriteLine("Game has ended");
                     break;
                 }              
@@ -211,7 +279,7 @@ namespace Snake__
 
             // Upload score to [Snake].[dbo].[tblGameScores]
             Console.WriteLine("Uploading your score");
-            SqlCommand uploadCommand = new SqlCommand("exec spInsertNewScore @PLAYER_NAME = '" + Snakeplayer.Name + "', @SCORE = " + Snakescore.Value, connection);
+            SqlCommand uploadCommand = new SqlCommand("exec spInsertNewScore @PLAYER_NAME = '" + _snakeplayer.Name + "', @SCORE = " + _snakescore.Value, connection);
 
             connection.Open();
             uploadCommand.ExecuteNonQuery();
@@ -226,88 +294,63 @@ namespace Snake__
 
         private static void DisplayTimeEvent(object source, ElapsedEventArgs e)
         {
-            Console.Clear();
-
-            char[,] screen = new char[Snakegame.Width, Snakegame.Height];
-
-            // Fill with background
-            for (int x = 0; x < Snakegame.Width; ++x)
-                for (int y = 0; y < Snakegame.Height; ++y)
-                    screen[x, y] = '.';
-            // Update with food location
-            screen[Snakefood.Location.X, Snakefood.Location.Y] = '#';
-
-            // Update with snake location
-            foreach (Point point in Snakebody.Snakebody)
-            {
-                screen[point.X, point.Y] = '@';
-            }
-
-
-
-            // Render screen to console
-            for (int y = 0; y < Snakegame.Height; ++y)
-            {
-                for (int x = 0; x < Snakegame.Width; ++x)
-                {
-                    Console.Write(screen[x, y]);
-                }
-                Console.WriteLine();
-            }
-            
-
-            // Remove tail from body, but don't do it if the head is on the food [head eats the food and snake gets longer]
-            if (Snakebody.Snakebody[0] != Snakefood.Location)
-            {
-                Snakebody.Snakebody.RemoveAt(Snakebody.Snakebody.Count - 1);
-            }
-            // If head is on the food then generate new food location
-            // Also increase score
-            if (Snakebody.Snakebody[0] == Snakefood.Location)
-            {
-                Snakefood.Location = Snakefood.GenerateFoodLocation();
-                Snakescore.Value = Snakescore.AddToScore(Snakegame.Foodcounter);
-                Snakegame.Foodcounter += 1;
-            }
-
-
             // Get current head position
-            Point next = Snakebody.Snakebody[0];
+            Point next = _snakebody.Location[0];
 
             // Determine where the head should go
-            if (Snakedirection.Movedirection == Direction.Left)
+            if (_snakedirection.Movedirection == Direction.Left)
                 next = new Point(next.X - 1, next.Y);
-            if (Snakedirection.Movedirection == Direction.Right)
+            if (_snakedirection.Movedirection == Direction.Right)
                 next = new Point(next.X + 1, next.Y);
-            if (Snakedirection.Movedirection == Direction.Up)
+            if (_snakedirection.Movedirection == Direction.Up)
                 next = new Point(next.X, next.Y - 1);
-            if (Snakedirection.Movedirection == Direction.Down)
+            if (_snakedirection.Movedirection == Direction.Down)
                 next = new Point(next.X, next.Y + 1);
 
-            // If snake hits itself, set Gameover to true to end the game
-            if (Snakebody.Snakebody.Contains(next))
-            {
-                Console.WriteLine(Snakeplayer.Name + ", you've achieved a score of " + Snakescore.Value + "!");
-                MyTimer.Stop();
-                Snakegame.Gameover = true;
-            }
-
-
-            // Insert the new head into body
-            Snakebody.Snakebody.Insert(0, next);
 
             // If head hits a wall, set Gameover to true to end the game
-            if (Snakebody.Snakebody[0].X == -1 | Snakebody.Snakebody[0].Y == -1 | Snakebody.Snakebody[0].X == Snakegame.Width || Snakebody.Snakebody[0].Y == Snakegame.Height)
+            if (next.X == -1 | next.Y == -1 | next.X == _snakegame.Width || next.Y == _snakegame.Height)
             {
-                
-                Console.WriteLine(Snakeplayer.Name + ", you've achieved a score of " + Snakescore.Value + "!");
+                Console.SetCursorPosition(0, _snakegame.Height + 1);
+                Console.WriteLine(_snakeplayer.Name + ", you've achieved a score of " + _snakescore.Value + "!");
                 MyTimer.Stop();
-                Snakegame.Gameover = true;
+                _snakegame.Gameover = true;
             }
+            // If snake hits itself, set Gameover to true to end the game
+            else if (_snakebody.Location.Contains(next))
+            {
+                Console.SetCursorPosition(0, _snakegame.Height + 1);
+                Console.WriteLine(_snakeplayer.Name + ", you've achieved a score of " + _snakescore.Value + "!");
+                MyTimer.Stop();
+                _snakegame.Gameover = true;
+            }
+            else
+            {
+                // Insert the new head into body
+                _snakebody.Location.Insert(0, next);
+                if(!(_snakegame.Gameover))
+                    WriteAt("@", _snakebody.Location[0].X, _snakebody.Location[0].Y);
 
+                // Remove tail from body, but don't do it if the head is on the food [head eats the food and snake gets longer]
+                if (_snakebody.Location[0] != _snakefood.Location)
+                {
+                    WriteAt(".", _snakebody.Location[_snakebody.Location.Count - 1].X, _snakebody.Location[_snakebody.Location.Count - 1].Y);
+                    _snakebody.Location.RemoveAt(_snakebody.Location.Count - 1);
+                }
+
+                // If head is on the food then generate & draw new food location
+                // Also increase score
+                if (_snakebody.Location[0] == _snakefood.Location)
+                {
+                    _snakefood.Location = _snakefood.GenerateFoodLocation();
+                    WriteAt("#", _snakefood.Location.X, _snakefood.Location.Y);
+                    _snakescore.Value = _snakescore.AddToScore(_snakegame.Foodcounter);
+                    _snakegame.Foodcounter += 1;
+                }
+            }
         }
 
-        // Procedure that connects to the SnakeSQL DB and gets a list of the top ten players and their scores
+        // Method that connects to the SnakeSQL DB and gets a list of the top ten players and their scores
         // Then it converts it into a list of Strings and returns that list
         private static List<String> LoadTop10()
         {
@@ -328,6 +371,90 @@ namespace Snake__
                 }
             }
             return listOfScores;
-        } 
+        }
+
+        // Method to draw a string starting at a certain position in the console
+        public static void WriteAt(string s, int x, int y)
+        {
+            try
+            {
+                Console.SetCursorPosition(x, y);
+                Console.Write(s);
+            }
+            catch (ArgumentOutOfRangeException e)
+            {
+                Console.Clear();
+                Console.WriteLine(e.Message);
+            }
+        }
+
+        // Method to draw the borders of the game field
+        // Currently unused
+        public void Drawborders(int width, int height)
+        {
+            // Draw left border
+            for (int i = 1; i < height; i++)
+            {
+                WriteAt("|", 0, i);
+            }
+
+            // Draw right border
+            for (int i = 1; i < height; i++)
+            {
+                WriteAt("|", i, 0);
+            }
+
+            // Draw top border
+            for (int i = 1; i < width; i++)
+            {
+                WriteAt("-", 0, i);
+            }
+
+            // Draw bottom border
+            for (int i = 1; i < width; i++)
+            {
+                WriteAt("-", i, 0);
+            }
+
+            // Draw the four corners
+            WriteAt("*", 0, 0);
+            WriteAt("*", width, height);
+            WriteAt("*", width, 0);
+            WriteAt("*", 0, height);
+
+        }
+
+        // Method that draws the initial game screen
+        public static void DrawScreen()
+        {
+            // Console.Clear();
+            Console.SetCursorPosition(0, 0);
+
+            char[,] screen = new char[_snakegame.Width, _snakegame.Height];
+
+            // Fill with background
+            for (int x = 0; x < _snakegame.Width; ++x)
+                for (int y = 0; y < _snakegame.Height; ++y)
+                    screen[x, y] = '.';
+            // Update with food location
+            screen[_snakefood.Location.X, _snakefood.Location.Y] = '#';
+
+            // Update with snake location
+            foreach (Point point in _snakebody.Location)
+            {
+                screen[point.X, point.Y] = '@';
+            }
+
+            // Render screen to console
+            for (int y = 0; y < _snakegame.Height; ++y)
+            {
+                for (int x = 0; x < _snakegame.Width; ++x)
+                {
+                    Console.Write(screen[x, y]);
+                }
+                Console.WriteLine();
+            }
+        }
+
     }
 }
