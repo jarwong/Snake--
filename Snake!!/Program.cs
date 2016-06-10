@@ -7,6 +7,7 @@ using System.Data.SqlClient;
 using System.Configuration;
 using System.Net;
 using System.Net.NetworkInformation;
+using System.Runtime.InteropServices.WindowsRuntime;
 
 namespace Snake__
 {
@@ -58,6 +59,67 @@ namespace Snake__
             Height = 20;
             Gameover = false;
             Foodcounter = 0;
+        }
+        public static void WriteAt(string s, int x, int y)
+        {
+            try
+            {
+                Console.SetCursorPosition(x, y);
+                Console.Write(s);
+            }
+            catch (ArgumentOutOfRangeException e)
+            {
+                Console.Clear();
+                Console.WriteLine(e.Message);
+            }
+        }
+        public static void WriteAt(char s, int x, int y)
+        {
+            try
+            {
+                Console.SetCursorPosition(x, y);
+                Console.Write(s);
+            }
+            catch (ArgumentOutOfRangeException e)
+            {
+                Console.Clear();
+                Console.WriteLine(e.Message);
+            }
+        }
+
+        // Method to draw the borders of the game field
+        public void Drawborders()
+        {
+            // Draw left border
+            for (int i = 1; i <= Height; i++)
+            {
+                WriteAt("|", 0, i);
+            }
+
+            // Draw right border
+            for (int i = 1; i <= Height; i++)
+            {
+                WriteAt("|", Width, i);
+            }
+
+            // Draw top border
+            for (int i = 1; i <= Width; i++)
+            {
+                WriteAt("-", i, 0);
+            }
+
+            // Draw bottom border
+            for (int i = 1; i <= Width; i++)
+            {
+                WriteAt("-", i, Height + 1);
+            }
+
+            // Draw the four corners
+            WriteAt("*", 0, 0);
+            WriteAt("*", Width, Height);
+            WriteAt("*", Width, 0);
+            WriteAt("*", 0, Height);
+
         }
     }
     class Body
@@ -168,6 +230,8 @@ namespace Snake__
 
             // Game begins once a key is pressed
             Console.ReadKey();
+            Console.Clear();
+            // Snakegame.Drawborders();
 
             // Beginning game timer
             MyTimer.Elapsed += DisplayTimeEvent;
@@ -226,7 +290,8 @@ namespace Snake__
 
         private static void DisplayTimeEvent(object source, ElapsedEventArgs e)
         {
-            Console.Clear();
+            // Console.Clear();
+            Console.SetCursorPosition(0, 0);
 
             char[,] screen = new char[Snakegame.Width, Snakegame.Height];
 
@@ -304,10 +369,10 @@ namespace Snake__
                 MyTimer.Stop();
                 Snakegame.Gameover = true;
             }
-
+            
         }
 
-        // Procedure that connects to the SnakeSQL DB and gets a list of the top ten players and their scores
+        // Method that connects to the SnakeSQL DB and gets a list of the top ten players and their scores
         // Then it converts it into a list of Strings and returns that list
         private static List<String> LoadTop10()
         {
@@ -328,6 +393,57 @@ namespace Snake__
                 }
             }
             return listOfScores;
-        } 
+        }
+
+        // Method to draw a string starting at a certain position in the console
+        public static void WriteAt(string s, int x, int y)
+        {
+            try
+            {
+                Console.SetCursorPosition(x, y);
+                Console.Write(s);
+            }
+            catch (ArgumentOutOfRangeException e)
+            {
+                Console.Clear();
+                Console.WriteLine(e.Message);
+            }
+        }
+
+        // Method to draw the borders of the game field
+        public void Drawborders(int width, int height)
+        {
+            // Draw left border
+            for (int i = 1; i < height; i++)
+            {
+                WriteAt("|", 0, i);
+            }
+
+            // Draw right border
+            for (int i = 1; i < height; i++)
+            {
+                WriteAt("|", i, 0);
+            }
+
+            // Draw top border
+            for (int i = 1; i < width; i++)
+            {
+                WriteAt("-", 0, i);
+            }
+
+            // Draw bottom border
+            for (int i = 1; i < width; i++)
+            {
+                WriteAt("-", i, 0);
+            }
+
+            // Draw the four corners
+            WriteAt("*", 0, 0);
+            WriteAt("*", width, height);
+            WriteAt("*", width, 0);
+            WriteAt("*", 0, height);
+
+        }
+
     }
 }
